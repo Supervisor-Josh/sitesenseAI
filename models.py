@@ -21,7 +21,7 @@ class Analysis(Base):
     __tablename__ = "analyses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(index=True)
+    user_id: Mapped[int | None] = mapped_column(index=True, nullable=True)
     input_text: Mapped[str] = mapped_column(Text)
     findings: Mapped[str | None] = mapped_column(Text, nullable=True)
     recommendations: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -1,88 +1,70 @@
 # SiteSense Backend
 
-FastAPI backend for SiteSense. It provides the API foundation, PostgreSQL
-database integration, and the future boundaries for authentication, analysis,
-and Gemma AI integration.
+Minimal, free-to-run MVP backend for SiteSense. It uses FastAPI, SQLite, and
+Gemma through the Google AI Studio Gemini API. No paid hosting or PostgreSQL
+account is required for the demo.
 
-## Requirements
-
-- Python 3.13 or newer
-- PostgreSQL 16 or newer
-- Docker (recommended for local PostgreSQL and deployment)
-
-## Local development
-
-Create and activate a virtual environment:
+## Fastest setup
 
 ```bash
+cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 ```
 
-Set the database connection:
+Create a free API key in [Google AI Studio](https://aistudio.google.com/apikey)
+and put it in `.env`:
 
-```bash
-export DATABASE_URL="postgresql+psycopg://sitesense:sitesense@localhost:5432/sitesense"
+```env
+GEMINI_API_KEY=your-key-here
+GEMMA_MODEL=gemma-3-27b-it
 ```
 
-Start PostgreSQL separately, then run the API:
+The configured model is sent to the Gemini API as `models/{GEMMA_MODEL}`.
+Change it if Google AI Studio shows a different Gemma model available to your
+key. Never commit `.env` or the API key.
+
+Start the API:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-The API is available at `http://localhost:8000`. Verify it with:
+The default database is the local `sitesense.db` SQLite file. PostgreSQL is
+still supported by setting `DATABASE_URL`, but it is not needed for this MVP.
+
+## MVP flow
+
+- `GET /health` — API health
+- `POST /analyses` — sends submitted text to Gemma and stores the result
+- `GET /analyses` — returns local analysis history
+
+Example request:
 
 ```bash
-curl http://localhost:8000/health
+curl -X POST http://localhost:8000/analyses \
+  -H 'Content-Type: application/json' \
+  -d '{"input_text":"A clinic website is hard to use on mobile."}'
 ```
 
-The application creates the initial SQLAlchemy tables on startup. Production
-schema migrations should be introduced before making breaking schema changes.
+## Frontend
 
-## Docker
-
-Build and run the API image:
+In another terminal:
 
 ```bash
-docker build -t sitesense-api .
-docker run --rm -p 8000:8000 \
-  -e DATABASE_URL="$DATABASE_URL" \
-  sitesense-api
+cd frontend
+npm install
+npm run dev
 ```
 
-The API container does not include PostgreSQL. Use a managed PostgreSQL
-database or a separate PostgreSQL service.
+Open `http://localhost:5173`. Set `VITE_API_URL` only when the API is not
+running at `http://localhost:8000`.
 
-## Deploying to DigitalOcean
+## Deliberate MVP limits
 
-DigitalOcean App Platform is the simplest deployment path for this container:
-
-1. Push this repository to GitHub.
-2. In DigitalOcean, create an App and select the GitHub repository.
-3. Configure the component as a Docker service using this repository's
-   `Dockerfile`.
-4. Set the HTTP port to `8000`.
-5. Add a DigitalOcean managed PostgreSQL database to the app, or provide an
-   external PostgreSQL connection.
-6. Add `DATABASE_URL` as an encrypted runtime environment variable.
-7. Add `GEMINI_API_KEY` as an encrypted runtime environment variable when
-   Gemma integration is enabled.
-8. Set `GEMMA_MODEL` to the exact model identifier used by the Gemini API.
-9. Configure a health check at `/health`.
-10. Restrict CORS in `main.py` to the deployed frontend origin before
-    production.
-
-For production, use a managed database, backups, TLS, and secret environment
-variables. Do not commit `.env` files, API keys, or database passwords.
-
-## API foundation
-
-- `GET /health` — service health response
-- `backend/database.py` — SQLAlchemy engine and session dependency
-- `backend/models.py` — initial `User` and `Analysis` models
-- `backend/gemma.py` — reserved Gemma integration boundary
-
-Authentication and AI analysis routes are intentionally reserved for later
-development phases.
+This time-boxed demo has no user accounts, hosted database, payment-based
+hosting, or production authentication. History is local to the machine
+running the backend. These can be added after the core Gemma workflow is
+demonstrated.

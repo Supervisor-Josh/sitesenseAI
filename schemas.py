@@ -16,7 +16,7 @@ class AnalysisResponse(AnalysisCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    user_id: int
+    user_id: int | None = None
     findings: str | None = None
     recommendations: str | None = None
     created_at: datetime
